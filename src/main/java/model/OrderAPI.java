@@ -1,6 +1,7 @@
 package model;
 
 import com.github.javafaker.Faker;
+import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 
 import java.time.LocalDate;
@@ -16,10 +17,12 @@ public class OrderAPI {
 
     static CourierAPI courierAPI = new CourierAPI();
 
-    private Integer id;
+    private Integer id; // track последнего созданного заказа
+
     public Integer getId() {
         return id;
     }
+
     private String url = courierAPI.getBaseUri();
 
     public final static String ORDER_ENDPOINT = "/api/v1/orders";
@@ -40,22 +43,8 @@ public class OrderAPI {
     public static final List<String> COLOR_GREY = Arrays.asList("GREY");
     public static final List<String> COLOR_BOTH = Arrays.asList("BLACK", "GREY");
 
-
-
-    public void deleteOrderExpectStatus200OK() {
-
-        given()
-                .contentType(ContentType.JSON)
-                .baseUri(url)
-                .log().all()
-                .put(ORDER_DELETE_ENDPOINT + "?track=" + id)
-                .then()
-                .statusCode(200)
-                .log().all();
-    }
-
+    @Step("Создание заказа")
     public void createOrderExpectStatus201CREATED(Order order) {
-
         id = given()
                 .baseUri(url)
                 .log().body()
@@ -69,6 +58,7 @@ public class OrderAPI {
                 .log().status()
                 .extract().path("track");
 
+        // Дополнительный GET-запрос для проверки (можно оставить или убрать)
         given()
                 .baseUri(url)
                 .log().body()
@@ -76,11 +66,10 @@ public class OrderAPI {
                 .then()
                 .statusCode(200)
                 .log().body();
-
     }
 
+    @Step("Получение списка заказов курьера")
     public void getOrderListExpectStatus200OK(int id) {
-
         given()
                 .baseUri(url)
                 .log().all()
@@ -90,6 +79,17 @@ public class OrderAPI {
                 .statusCode(200)
                 .log().all()
                 .log().status();
+    }
 
+    @Step("Отмена заказа")
+    public void deleteOrderExpectStatus200OK() {
+        given()
+                .contentType(ContentType.JSON)
+                .baseUri(url)
+                .log().all()
+                .put(ORDER_DELETE_ENDPOINT + "?track=" + id)
+                .then()
+                .statusCode(200)
+                .log().all();
     }
 }

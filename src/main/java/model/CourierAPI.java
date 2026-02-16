@@ -1,6 +1,7 @@
 package model;
 
 import com.github.javafaker.Faker;
+import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 
 import static io.restassured.RestAssured.given;
@@ -9,7 +10,6 @@ import static java.net.HttpURLConnection.*;
 public class CourierAPI {
 
     private static final String BASE_URI = "https://qa-scooter.praktikum-services.ru";
-
 
     public String getBaseUri() {
         return BASE_URI;
@@ -41,8 +41,8 @@ public class CourierAPI {
         return PASSWORD;
     }
 
+    @Step("Создание курьера (ожидаемый статус 201 Created)")
     public void createCourierExpectStatus200OK(Courier courier) {
-
         given()
                 .log().all()
                 .contentType(ContentType.JSON)
@@ -54,8 +54,8 @@ public class CourierAPI {
                 .statusCode(HTTP_CREATED);
     }
 
+    @Step("Создание курьера (ожидаемый статус 400 Bad Request)")
     public void createCourierExpectStatus400BADREQUEST(Courier courier) {
-
         given()
                 .log().all()
                 .contentType(ContentType.JSON)
@@ -67,7 +67,7 @@ public class CourierAPI {
                 .statusCode(HTTP_BAD_REQUEST);
     }
 
-
+    @Step("Логин курьера (ожидаемый статус 200 OK)")
     public void loginCourierExpectStatus200OK(Courier courier) {
         id = given()
                 .log().body()
@@ -81,6 +81,7 @@ public class CourierAPI {
                 .extract().path("id");
     }
 
+    @Step("Логин курьера (ожидаемый статус 404 Not Found)")
     public void loginCourierExpectStatus404NOTFOUND(Courier courier) {
         given()
                 .log().body()
@@ -91,9 +92,9 @@ public class CourierAPI {
                 .then()
                 .log().body()
                 .statusCode(HTTP_NOT_FOUND);
-
     }
 
+    @Step("Логин курьера (ожидаемый статус 400 Bad Request)")
     public void loginCourierExpectStatus400BADREQUEST(Courier courier) {
         given()
                 .log().body()
@@ -104,9 +105,9 @@ public class CourierAPI {
                 .then()
                 .log().body()
                 .statusCode(HTTP_BAD_REQUEST);
-
     }
 
+    @Step("Удаление курьера (ожидаемый статус 200 OK)")
     public void deleteCourierExpectStatus200OK() {
         given()
                 .log().uri()
@@ -117,8 +118,8 @@ public class CourierAPI {
                 .statusCode(HTTP_OK);
     }
 
+    @Step("Попытка создать дубликат курьера (ожидаемый статус 409 Conflict)")
     public void createDoubleCourierExpectStatus409CONFLICT(Courier courier) {
-
         given()
                 .log().body()
                 .contentType(ContentType.JSON)
