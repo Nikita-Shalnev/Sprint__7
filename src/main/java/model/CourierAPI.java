@@ -3,9 +3,9 @@ package model;
 import com.github.javafaker.Faker;
 import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
-import static java.net.HttpURLConnection.*;
 
 public class CourierAPI {
 
@@ -27,23 +27,9 @@ public class CourierAPI {
     public final String WRONGLOGIN = "&логин";
     public final String WRONGPASSWORD = "№пароль";
 
-    private Integer id;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public String getLogin() {
-        return LOGIN;
-    }
-
-    public String getPassword() {
-        return PASSWORD;
-    }
-
-    @Step("Создание курьера (ожидаемый статус 201 Created)")
-    public void createCourierExpectStatus200OK(Courier courier) {
-        given()
+    @Step("Создание курьера")
+    public Response createCourier(Courier courier) {
+        return given()
                 .log().all()
                 .contentType(ContentType.JSON)
                 .body(courier)
@@ -51,25 +37,12 @@ public class CourierAPI {
                 .post(COURIER_ENDPOINT)
                 .then()
                 .log().body()
-                .statusCode(HTTP_CREATED);
+                .extract().response();
     }
 
-    @Step("Создание курьера (ожидаемый статус 400 Bad Request)")
-    public void createCourierExpectStatus400BADREQUEST(Courier courier) {
-        given()
-                .log().all()
-                .contentType(ContentType.JSON)
-                .body(courier)
-                .when()
-                .post(COURIER_ENDPOINT)
-                .then()
-                .log().body()
-                .statusCode(HTTP_BAD_REQUEST);
-    }
-
-    @Step("Логин курьера (ожидаемый статус 200 OK)")
-    public void loginCourierExpectStatus200OK(Courier courier) {
-        id = given()
+    @Step("Логин курьера")
+    public Response loginCourier(Courier courier) {
+        return given()
                 .log().body()
                 .contentType(ContentType.JSON)
                 .body(courier)
@@ -77,60 +50,33 @@ public class CourierAPI {
                 .post(LOGIN_COURIER_ENDPOINT)
                 .then()
                 .log().body()
-                .statusCode(HTTP_OK)
-                .extract().path("id");
+                .extract().response();
     }
 
-    @Step("Логин курьера (ожидаемый статус 404 Not Found)")
-    public void loginCourierExpectStatus404NOTFOUND(Courier courier) {
-        given()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body(courier)
-                .when()
-                .post(LOGIN_COURIER_ENDPOINT)
-                .then()
-                .log().body()
-                .statusCode(HTTP_NOT_FOUND);
-    }
-
-    @Step("Логин курьера (ожидаемый статус 400 Bad Request)")
-    public void loginCourierExpectStatus400BADREQUEST(Courier courier) {
-        given()
-                .log().body()
-                .contentType(ContentType.JSON)
-                .body("{\"password\": \"1234\"}")
-                .when()
-                .post(LOGIN_COURIER_ENDPOINT)
-                .then()
-                .log().body()
-                .statusCode(HTTP_BAD_REQUEST);
-    }
-
-    @Step("Удаление курьера (ожидаемый статус 200 OK)")
-    public void deleteCourierExpectStatus200OK() {
-        given()
+    @Step("Удаление курьера")
+    public Response deleteCourier(int id) {
+        return given()
                 .log().uri()
                 .contentType(ContentType.JSON)
                 .delete(DELETE_COURIER_ENDPOINT + id)
                 .then()
                 .log().body()
-                .statusCode(HTTP_OK);
+                .extract().response();
     }
 
-    @Step("Попытка создать дубликат курьера (ожидаемый статус 409 Conflict)")
-    public void createDoubleCourierExpectStatus409CONFLICT(Courier courier) {
-        given()
+    @Step("Попытка создать дубликат курьера")
+    public Response createDoubleCourier(Courier courier) {
+        return given()
                 .log().body()
                 .contentType(ContentType.JSON)
                 .body(courier)
+                .when()
                 .post(COURIER_ENDPOINT)
                 .then()
                 .log().all()
-                .statusCode(HTTP_CONFLICT);
+                .extract().response();
     }
 }
-
 
 
 

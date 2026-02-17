@@ -1,20 +1,41 @@
-import io.qameta.allure.Step;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.qameta.allure.Description;
+import io.restassured.RestAssured;
+import io.restassured.config.ObjectMapperConfig;
+import io.restassured.config.RestAssuredConfig;
+import io.restassured.response.Response;
+import model.CourierAPI;
 import model.Order;
 import model.OrderAPI;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
 public class OrderColorTest {
 
     private final OrderAPI orderClient;
     private final Order testOrder;
+    private int track;
 
     public OrderColorTest(String testDescription, Order order) {
         this.testOrder = order;
         this.orderClient = new OrderAPI();
+    }
+
+    @BeforeClass
+    public static void setUp() {
+        RestAssured.baseURI = new CourierAPI().getBaseUri();
+        // Глобальная настройка Jackson: не сериализовать null-поля
+        RestAssured.config = RestAssuredConfig.config()
+                .objectMapperConfig(new ObjectMapperConfig().jackson2ObjectMapperFactory(
+                        (cls, charset) -> new ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                ));
     }
 
     @Parameterized.Parameters(name = "{0}")
@@ -68,15 +89,20 @@ public class OrderColorTest {
     }
 
     @Test
-    @Step("Создание заказа с цветом: {0}")
+    @Description("Создание заказа с цветом: {0}")
     public void shouldCreateOrderWithGivenColors() {
-        orderClient.createOrderExpectStatus201CREATED(testOrder);
-
+        Response response = orderClient.createOrder(testOrder);
+        response.then()
+                .statusCode(201)
+                .body("track", notNullValue());
+        track = response.path("track");
     }
 
     @After
-    @Step("Отмена созданного заказа")
     public void cancelOrder() {
-        orderClient.deleteOrderExpectStatus200OK();
+        if (track != 0) {
+            Response response = orderClient.cancelOrder(track);
+            response.then().statusCode(200);
+        }
     }
 }
